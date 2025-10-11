@@ -331,7 +331,14 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ accessToken: access, refreshToken: refreshRaw, user: { _id: user._id, email: user.email, displayName: user.displayName, role: user.role || 'user' } });
   } catch (e) {
     LOG.warn({ e }, '[auth/login] failed');
-    if (e instanceof z.ZodError) return res.status(400).json({ error: e.issues });
+    if (e instanceof z.ZodError) {
+      // Provide more helpful error message for email validation
+      const emailError = e.issues.find(issue => issue.path.includes('email'));
+      if (emailError) {
+        return res.status(400).json({ error: 'Please provide a valid email address for user login. Use /api/artists/auth/login for artist login with username.' });
+      }
+      return res.status(400).json({ error: e.issues });
+    }
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -533,6 +540,11 @@ app.get('/api/search', async (req, res) => {
 // --- Artist Profile (Public)
 app.get('/api/artists/:id/profile', async (req, res) => {
   try {
+    // Validate ObjectId format first
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid artist ID format' });
+    }
+    
     const id = new ObjectId(req.params.id);
     const artist = await colArtists.findOne({ _id: id }, { projection: { password: 0 } });
     if (!artist) return res.status(404).json({ error: 'Artist not found' });
@@ -559,6 +571,11 @@ app.get('/api/artists/:id/profile', async (req, res) => {
 // Legacy endpoint for compatibility
 app.get('/api/artists/:id', async (req, res) => {
   try {
+    // Validate ObjectId format first
+    if (!ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid artist ID format' });
+    }
+    
     const id = new ObjectId(req.params.id);
     const art = await colArtists.findOne({ _id: id }, { projection: { password: 0 } });
     if (!art) return res.status(404).json({ error: 'Artist not found' });
