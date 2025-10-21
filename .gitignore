@@ -1,0 +1,19 @@
+# Ignore old server files
+server.js
+DCRatBuild.*
+README_FEATURES.md
+store/
+node_modules/
+package*.json
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
